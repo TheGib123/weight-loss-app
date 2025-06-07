@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, url_for
-import sqlite3
+import mysql.connector
+from mysql.connector import Error
 import pandas as pd
 import charts
 
@@ -11,22 +12,45 @@ heavy_weight = 295
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
+def get_connection():
+    return mysql.connector.connect(
+        host='mysql',
+        user='chace',
+        password='password',
+        database='mydb'
+    )
+
+def execute_query(query):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Error as e:
+        print("Query Error:", e)
+
 def init_db():
-    with sqlite3.connect('data.db') as conn:
-        conn.execute('''
+    try:
+        q ='''
             CREATE TABLE IF NOT EXISTS entries (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date TEXT UNIQUE,
-                calories INTEGER,
-                bmr INTEGER,
-                weight REAL
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                date DATE UNIQUE,
+                calories INT,
+                bmr INT,
+                weight FLOAT
             )
-        ''')
+        '''
+        execute_query(q)
+    except Error as e:
+        print("DB Init Error:", e)
 
 @app.route('/upload', methods=['POST'])
 def upload_csv():
     weight_file = request.files.get('weight_file')
     calorie_file = request.files.get('calorie_file')
+    print('a')
 
     if not weight_file or not calorie_file:
         flash('Both files are required!', 'danger')
@@ -37,9 +61,13 @@ def upload_csv():
         df_weight = pd.read_csv(weight_file)
         df_calories = pd.read_csv(calorie_file)
 
+        print('b')
+
         # Make sure 'date' column exists and is properly formatted
         df_weight['date'] = pd.to_datetime(df_weight['Date']).dt.date
         df_calories['date'] = pd.to_datetime(df_calories['Date']).dt.date
+
+        print('c')
 
         df = pd.merge(df_weight, df_calories, on='Date')
         df['Str_Date'] = pd.to_datetime(df['Date'])
@@ -47,17 +75,26 @@ def upload_csv():
         df['BMR'] = 10 * (df['Weight'] * 0.45359237) + 6.25 * (height * 2.54) - 5 * age + 5
         df['BMR'] = df['BMR'].round(0).astype(int)
 
+        print(df.head())
+        print(df.dtypes)
+
+        print('d')
+
         charts.advanced_chart(df)
         charts.simple_chart(df)
         charts.avg_chart(df)
 
-        # Insert into SQLite
-        with sqlite3.connect('data.db') as conn:
-            for _, row in df.iterrows():
-                conn.execute(
-                    'INSERT OR REPLACE INTO entries (date, calories, bmr, weight) VALUES (?, ?, ?, ?)',
-                    (row['Date'], row['Food Calories'], row['BMR'], row['Weight'])
-                )
+        print('e')
+
+        for _, row in df.iterrows():
+            date = row['Str_Date']
+            calories = row['Food Calories']
+            bmr = row['BMR']
+            weight = row['Weight']
+            q = f'REPLACE INTO entries (date, calories, bmr, weight) VALUES ("{date}", {calories}, {bmr}, {weight})'
+            execute_query(q)
+
+        print('f')
 
         flash('CSV imported successfully!', 'success')
 
@@ -72,30 +109,24 @@ def upload_csv():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # date = request.form['date']
-        # calories = request.form['calories']
-        # weight = request.form['weight']
-        with sqlite3.connect('data.db') as conn:
-            try:
-                # conn.execute(
-                #     'INSERT OR REPLACE INTO entries (date, calories, weight) VALUES (?, ?, ?)',
-                #     (date, calories, weight)
-                # )
-                conn.execute(
-                    'DELETE from entries'
-                )
-            except Exception as e:
-                print("Error:", e)
+        try:
+            q = 'DELETE from entries'
+            execute_query(q)
+        except Exception as e:
+            print("Error:", e)
         return redirect('/')
-    
-    with sqlite3.connect('data.db') as conn:
-        cursor = conn.execute('SELECT date, calories, weight, bmr FROM entries ORDER BY date')
-        entries = cursor.fetchall()
 
-    print(entries)
+    conn = get_connection()
+    cursor = conn.cursor()  
+    cursor.execute('SELECT date, calories, weight, bmr FROM entries ORDER BY date')
+    entries = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+
     weight_data = {
         'heaviest_weight': heavy_weight,
-        'total_weight_lost': heavy_weight - entries[len(entries) - 1][2] if entries else 0,
+        'total_weight_lost': round(heavy_weight - entries[len(entries) - 1][2],2) if entries else 0,
     }
     
     return render_template('index.html', entries=entries, weight_data=weight_data)
