@@ -1,3 +1,4 @@
+.env
 mysql_database/
 advanced_interactive_chart.html
 simple_interactive_chart.html

@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  weight_app:
+    build:
+      context: ./weight_app
+      dockerfile: Dockerfile
+    container_name: weight_app
+    ports:
+      - "80:5000"
+    volumes:
+      - ./weight_app/src:/app/src
+    environment:
+      - FLASK_ENV=development
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  scrape_app:
+    build:
+      context: ./scrape_app
+      dockerfile: Dockerfile
+    container_name: scrape_app
+    volumes:
+      - ./scrape_app/src:/app/src
+    environment:
+      - FLASK_ENV=development
+    restart: unless-stopped
+    #command: tail -f /dev/null
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password        # Change this
+      MYSQL_DATABASE: mydb               # Optional: initial database
+      MYSQL_USER: chace                       # Optional: user
+      MYSQL_PASSWORD: password               # Optional: user password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
