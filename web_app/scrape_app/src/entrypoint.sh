@@ -1,4 +1,5 @@
 #!/bin/bash
+# file should be saved as LF (Unix) line endings
 
 # Dump runtime env vars to file for cron to use
 printenv | grep -v "no_proxy" > /etc/environment
