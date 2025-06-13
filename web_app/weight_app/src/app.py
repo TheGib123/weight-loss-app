@@ -1,21 +1,31 @@
 from flask import Flask, render_template, request, redirect, flash, url_for
-import mysql.connector
 from mysql.connector import Error
+from dotenv import load_dotenv
+import mysql.connector
 import pandas as pd
+import os
 import charts
 
-height = 65   # in inches
-age = 29
-heavy_weight = 295
-# download_path = '/root/Downloads'
+load_dotenv()
+LOSEIT_EMAIL = os.getenv('LOSEIT_EMAIL')
+LOSEIT_PASSWORD = os.getenv('LOSEIT_PASSWORD')
+DB_USERNAME = os.getenv('DB_USERNAME')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_HOST = os.getenv('DB_HOST')
+DB_NAME = os.getenv('DB_NAME')
+HEIGHT = int(os.getenv('HEIGHT'))
+AGE = int(os.getenv('AGE'))
+HEAVY_WEIGHT = int(os.getenv('HEAVY_WEIGHT'))
+CRON_TIME = os.getenv('CRON_TIME')
+DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH')
 
 
 def get_connection():
     return mysql.connector.connect(
-        host='mysql',
-        user='chace',
-        password='password',
-        database='mydb'
+        host=DB_HOST,
+        user=DB_USERNAME,
+        password=DB_PASSWORD,
+        database=DB_NAME
     )
 
 def execute_query(query):
@@ -68,7 +78,7 @@ def load_dfs(df_weight, df_calories):
         del df['calorie_date']
         df.rename(columns={'weight_date': 'date', 'Weight':'weight', 'Food Calories':'calories'}, inplace=True)
         df = df.sort_values(by='date')
-        df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (height * 2.54) - 5 * age + 5
+        df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (HEIGHT * 2.54) - 5 * AGE + 5
         df['bmr'] = df['bmr'].round(0).astype(int)
 
         for _, row in df.iterrows():
@@ -84,13 +94,6 @@ def load_dfs(df_weight, df_calories):
     except Exception as e:
         print("CSV Upload Error:", e)
         flash('Error importing CSV: ' + str(e), 'danger')
-
-# def remove_downloads():
-#     # remove all files in download directory
-#     for f in os.listdir(download_path):
-#         file_path = os.path.join(download_path, f)
-#         if os.path.isfile(file_path):
-#             os.remove(file_path)
 
 ##############################################################################################
 # Flask application to manage weight and calorie entries
@@ -120,68 +123,6 @@ def upload_csv():
 
     return redirect('/')
 
-# def load_data_from_site():
-#     load_dotenv()
-#     EMAIL = os.getenv('EMAIL')
-#     PASSWORD = os.getenv('PASSWORD')
-
-#     print(f'email: {EMAIL}')
-#     print(f'password: {PASSWORD}')
-
-#     options = Options()
-#     options.add_argument('--headless=new')  # Use the new headless mode
-#     options.add_argument('--no-sandbox')
-#     options.add_argument('--disable-dev-shm-usage')
-#     options.add_argument('--disable-gpu')
-#     options.add_argument('--window-size=1920,1080')
-
-#     driver = webdriver.Chrome(options=options)
-
-#     try:
-#         driver.get('https://my.loseit.com/login')
-
-#         # Wait for the email field to appear
-#         wait = WebDriverWait(driver, 15)
-#         email_field = wait.until(EC.presence_of_element_located((By.NAME, 'email')))
-#         password_field = wait.until(EC.presence_of_element_located((By.NAME, 'password')))
-#         login_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(text(),"Log In")]')))
-
-#         # Fill out form
-#         email_field.send_keys(EMAIL)
-#         password_field.send_keys(PASSWORD)
-#         login_button.click()
-
-#         # Wait for the login to complete by checking the redirect or user element
-#         time.sleep(5)  # optional, can be replaced with smarter wait
-
-#         # Go to export URL
-#         driver.get('https://www.loseit.com/export/details/weight?days=168')
-#         driver.get('https://www.loseit.com/export/details/foodcalories?days=168')
-
-#         time.sleep(10) # Wait for the export to complete, adjust as necessary
-
-#         # get files in download directory
-#         files = os.listdir(download_path)
-#         print(f'Downloaded files: {files}')
-
-#         weight_file = [f for f in files if 'weight' in f.lower() and f.endswith('.csv')]
-#         calorie_file = [f for f in files if 'foodcalories' in f.lower() and f.endswith('.csv')]
-
-#         print(f'Weight file: {weight_file}')
-#         print(f'Calorie file: {calorie_file}')
-
-#         df_weight = pd.read_csv(os.path.join(download_path, weight_file[0]))
-#         df_calories = pd.read_csv(os.path.join(download_path, calorie_file[0]))
-
-#         print(df_weight.head())
-#         print(df_calories.head())
-
-#     finally:
-#         print('Closing the browser...')
-#         driver.quit()
-
-#         remove_downloads()
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -197,8 +138,8 @@ def index():
     current_weight = select_all_query('SELECT weight FROM entries JOIN (SELECT MAX(date) AS max_date FROM entries) AS max_date_table ON entries.date = max_date_table.max_date')
 
     weight_data = {
-        'heaviest_weight': heavy_weight,
-        'total_weight_lost': round(heavy_weight - entries[len(entries) - 1][2],2) if entries else 0,
+        'heaviest_weight': HEAVY_WEIGHT,
+        'total_weight_lost': round(HEAVY_WEIGHT - entries[len(entries) - 1][2],2) if entries else 0,
         'last_date': last_date[0][0] if last_date else None,
         'current_weight': current_weight[0][0] if current_weight else None,
     }
@@ -208,21 +149,24 @@ def index():
 @app.route('/complex_chart')
 def complex_chart():
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', get_connection())
-    charts.advanced_chart(df)
-    return redirect(url_for('static', filename='advanced_interactive_chart.html'))
+    graph_html = charts.trend_chart(df)
+    return render_template('chart.html', graph_html=graph_html)
+    #return redirect(url_for('static', filename='advanced_interactive_chart.html'))
 
 @app.route('/simple_chart')
 def simple_chart():
     # convert sql query to a dataframe
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', get_connection())
-    charts.simple_chart(df)
-    return redirect(url_for('static', filename='simple_interactive_chart.html'))
+    graph_html = charts.daily_chart(df)
+    return render_template('chart.html', graph_html=graph_html)
+    #return redirect(url_for('static', filename='simple_interactive_chart.html'))
 
 @app.route('/avg_chart')
 def avg_chart():  
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', get_connection())      
-    charts.avg_chart(df)
-    return redirect(url_for('static', filename='simple_week_avg_interactive_chart.html'))
+    graph_html = charts.weekly_chart(df)
+    return render_template('chart.html', graph_html=graph_html)
+    #return redirect(url_for('static', filename='simple_week_avg_interactive_chart.html'))
 
 @app.route('/data')
 def view_data():

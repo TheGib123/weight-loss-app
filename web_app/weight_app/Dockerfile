@@ -1,16 +1,33 @@
 FROM python:3.11-slim
 
+# build-time ARGs
+ARG LOSEIT_EMAIL
+ARG LOSEIT_PASSWORD
+ARG DB_USERNAME
+ARG DB_PASSWORD
+ARG DB_HOST
+ARG DB_NAME
+ARG HEIGHT
+ARG AGE
+ARG HEAVY_WEIGHT
+ARG CRON_TIME
+ARG DOWNLOAD_PATH
+
+RUN apt-get update && apt-get install -y tzdata
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-WORKDIR /app
+# Set timezone to America/Chicago
+ENV TZ=America/Chicago
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-COPY requirements.txt .
+COPY src/ /app/src/
+WORKDIR /app/src
+
+# Install pip requirements
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-COPY src/ ./src/
-
-WORKDIR /app/src
 EXPOSE 5000
 
 CMD ["python", "app.py"]

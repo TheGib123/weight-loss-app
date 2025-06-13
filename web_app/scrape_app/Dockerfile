@@ -1,9 +1,23 @@
 FROM python:3.11-slim
 
+ARG LOSEIT_EMAIL
+ARG LOSEIT_PASSWORD
+ARG DB_USERNAME
+ARG DB_PASSWORD
+ARG DB_HOST
+ARG DB_NAME
+ARG HEIGHT
+ARG AGE
+ARG HEAVY_WEIGHT
+ARG CRON_TIME
+ARG DOWNLOAD_PATH
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     nano \
     tzdata \
+    chromium \
+    chromium-driver \
     wget \
     gnupg \
     unzip \
@@ -26,45 +40,20 @@ RUN apt-get update && apt-get install -y \
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-COPY src/ ./src/
-
+COPY src/ /app/src/
 WORKDIR /app/src
 
-# Install Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
-    apt-get update && apt-get install -y google-chrome-stable
-
-# Install matching ChromeDriver for Chrome version
-RUN CHROME_VERSION=$(google-chrome --version | grep -oP "\d+\.\d+\.\d+") && \
-    CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json" | \
-    jq -r --arg ver "$CHROME_VERSION" '.channels.Stable.downloads.chromedriver[] | select(.platform == "linux64") | .url') && \
-    wget -O /tmp/chromedriver.zip "$CHROMEDRIVER_VERSION" && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
-    rm /tmp/chromedriver.zip
+# Install pip requirements
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Set display port to avoid crash
 ENV DISPLAY=:99
-
-########### Set up Cron Job ###########
-# set working directory
-WORKDIR /
 
 # Set timezone to America/Chicago
 ENV TZ=America/Chicago
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Set up cron job
-# RUN touch crontab
-RUN echo '0 1 * * * /usr/local/bin/python /app/src/scrape.py >> /var/log/cron.log 2>&1' | crontab -
+# Make entrypoint script executable
+RUN chmod +x entrypoint.sh
 
-# Create the log file to be able to run tail
-RUN touch /var/log/cron.log
-
-# Start the cron service
-CMD cron && tail -f /var/log/cron.log
+ENTRYPOINT ["./entrypoint.sh"]

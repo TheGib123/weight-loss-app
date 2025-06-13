@@ -1,8 +1,9 @@
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.io as pio
 import numpy as np
 
-def advanced_chart(df):
+def trend_chart(df):
     # advanced chart
 
     fig = go.Figure()
@@ -81,9 +82,12 @@ def advanced_chart(df):
 
 
     # Optional: save to HTML file
-    fig.write_html("static/advanced_interactive_chart.html")
+    #fig.write_html("static/advanced_interactive_chart.html")
 
-def simple_chart(df):
+    graph_html = pio.to_html(fig, full_html=False)
+    return graph_html
+
+def daily_chart(df):
     # simple chart
 
     fig = go.Figure()
@@ -140,9 +144,12 @@ def simple_chart(df):
 
 
     # Optional: save to HTML file
-    fig.write_html("static/simple_interactive_chart.html")
+    # fig.write_html("static/simple_interactive_chart.html")
 
-def avg_chart(df):
+    graph_html = pio.to_html(fig, full_html=False)
+    return graph_html
+
+def weekly_chart(df):
     week_df = df.copy()
     week_df['date'] = pd.to_datetime(week_df['date'])  # Ensure Date is datetime
     week_df['weekday'] = week_df['date'].dt.day_name()
@@ -241,4 +248,7 @@ def avg_chart(df):
 
 
     # Optional: save to HTML file
-    fig.write_html("static/simple_week_avg_interactive_chart.html")
+    # fig.write_html("static/simple_week_avg_interactive_chart.html")
+
+    graph_html = pio.to_html(fig, full_html=False)
+    return graph_html

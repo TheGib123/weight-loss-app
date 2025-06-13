@@ -11,7 +11,17 @@ services:
     volumes:
       - ./weight_app/src:/app/src
     environment:
-      - FLASK_ENV=development
+      - LOSEIT_EMAIL=${LOSEIT_EMAIL}
+      - LOSEIT_PASSWORD=${LOSEIT_PASSWORD}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - HEIGHT=${HEIGHT}
+      - AGE=${AGE}
+      - HEAVY_WEIGHT=${HEAVY_WEIGHT}
+      - CRON_TIME=${CRON_TIME}
+      - DOWNLOAD_PATH=${DOWNLOAD_PATH}
     restart: unless-stopped
     depends_on:
       mysql:
@@ -22,12 +32,19 @@ services:
       context: ./scrape_app
       dockerfile: Dockerfile
     container_name: scrape_app
-    volumes:
-      - ./scrape_app/src:/app/src
     environment:
-      - FLASK_ENV=development
+      - LOSEIT_EMAIL=${LOSEIT_EMAIL}
+      - LOSEIT_PASSWORD=${LOSEIT_PASSWORD}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - HEIGHT=${HEIGHT}
+      - AGE=${AGE}
+      - HEAVY_WEIGHT=${HEAVY_WEIGHT}
+      - CRON_TIME=${CRON_TIME}
+      - DOWNLOAD_PATH=${DOWNLOAD_PATH}
     restart: unless-stopped
-    #command: tail -f /dev/null
     depends_on:
       mysql:
         condition: service_healthy
@@ -37,16 +54,14 @@ services:
     container_name: mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: password        # Change this
-      MYSQL_DATABASE: mydb               # Optional: initial database
-      MYSQL_USER: chace                       # Optional: user
-      MYSQL_PASSWORD: password               # Optional: user password
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}        # Change this
+      MYSQL_DATABASE: ${DB_NAME}              # Optional: initial database
     ports:
       - "3306:3306"
     volumes:
       - ./mysql_database:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "mysql -u${DB_USERNAME} -p${DB_PASSWORD} -e 'SELECT 1'"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10

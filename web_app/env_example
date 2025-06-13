@@ -1,0 +1,12 @@
+LOSEIT_EMAIL=email@email.com
+LOSEIT_PASSWORD=loseitPassword
+DB_USERNAME=dbusername
+DB_PASSWORD=dbpassword
+DB_HOST=hostname
+DB_NAME=dbname
+HEIGHT=65
+AGE=29
+HEAVY_WEIGHT=295
+# run every day at 1:00 AM
+CRON_TIME=0 1 * * *
+DOWNLOAD_PATH=/root/Downloads
