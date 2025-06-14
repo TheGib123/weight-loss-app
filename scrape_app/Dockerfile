@@ -40,7 +40,8 @@ RUN apt-get update && apt-get install -y \
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-COPY src/ /app/src/
+COPY scrape_app/src/ /app/src/
+COPY ../functions/helper_functions.py /app/src/
 WORKDIR /app/src
 
 # Install pip requirements

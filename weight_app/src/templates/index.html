@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
+
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
     
+
 <body class="container py-4">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -22,38 +25,29 @@
     {% endwith %}
 
 
-    <h1 class="mb-4">Import CSV</h1>
-    <form method="POST" enctype="multipart/form-data" action="/upload">
-        <h6>Weight file</h6>
-        <div class="mb-3">
-            <input type="file" name="weight_file" class="form-control" accept=".csv" required>
-        </div>
-
-        <h6>Calories file</h6>
-        <div class="mb-3">
-            <input type="file" name="calorie_file" class="form-control" accept=".csv" required>
-        </div>
-        <button class="btn btn-success">Upload CSV's</button>
-    </form>
-
-
-
-    <hr class="my-4">
-    <h1 class="mb-4">Charts</h1>
-    <div class="col-12">
-        <a href="/simple_chart" class="btn btn-secondary">Daily</a>
-        <a href="/complex_chart" class="btn btn-secondary">Daily Trends</a>
-        <a href="/avg_chart" class="btn btn-secondary">Weekly</a>
+    <div class="mt-4 p-5 bg-secondary text-white rounded">
+        <center>
+            <h1 class="mb-4">Weight Loss Tracker</h1>
+        </center>
     </div>
+    <br><br>
 
 
-    <hr class="my-4">
     <h1 class="mb-4">Information</h1>
     <div class="col-12">
         <p>Heaviest weight  : {{ weight_data["heaviest_weight"] }} lbs</p>
         <p>Current weight  : {{ weight_data["current_weight"] }} lbs</p>
         <p>Weight Lost   : {{ weight_data["total_weight_lost"] }} lbs</p>
         <p>Last Data Load   : {{ weight_data["last_date"] }}</p>
+    </div>
+
+
+    <hr class="my-4">
+    <h1 class="mb-4">Charts</h1>
+    <div class="col-12">
+        <a href="/daily_chart" class="btn btn-secondary">Daily</a>
+        <a href="/daily_trend_chart" class="btn btn-secondary">Daily Trends</a>
+        <a href="/weekly_avg_chart" class="btn btn-secondary">Weekly Average</a>
     </div>
 
 
@@ -69,5 +63,7 @@
             document.getElementById('dateInput').value = today;
         });
     </script>
+
+
 </body>
 </html>

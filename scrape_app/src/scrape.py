@@ -10,18 +10,19 @@ import mysql.connector
 import pandas as pd
 import time
 import os
+import helper_functions as hf
 
 load_dotenv()
 LOSEIT_EMAIL = os.getenv('LOSEIT_EMAIL')
 LOSEIT_PASSWORD = os.getenv('LOSEIT_PASSWORD')
-DB_USERNAME = os.getenv('DB_USERNAME')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_HOST = os.getenv('DB_HOST')
-DB_NAME = os.getenv('DB_NAME') 
-HEIGHT = int(os.getenv('HEIGHT'))
-AGE = int(os.getenv('AGE'))
-HEAVY_WEIGHT = int(os.getenv('HEAVY_WEIGHT'))
-CRON_TIME = os.getenv('CRON_TIME')
+# DB_USERNAME = os.getenv('DB_USERNAME')
+# DB_PASSWORD = os.getenv('DB_PASSWORD')
+# DB_HOST = os.getenv('DB_HOST')
+# DB_NAME = os.getenv('DB_NAME') 
+# HEIGHT = int(os.getenv('HEIGHT'))
+# AGE = int(os.getenv('AGE'))
+# HEAVY_WEIGHT = int(os.getenv('HEAVY_WEIGHT'))
+# CRON_TIME = os.getenv('CRON_TIME')
 DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH')
 
 options = Options()
@@ -63,7 +64,7 @@ def download_files():
     time.sleep(15) # Wait for the export to complete, adjust as necessary
     driver.quit()
 
-def convert_files_to_df():    
+def convert_files_to_df():
     # get files in download directory
     files = os.listdir(DOWNLOAD_PATH)
     print(f'Downloaded files: {files}')
@@ -78,58 +79,6 @@ def convert_files_to_df():
     df_calories = pd.read_csv(os.path.join(DOWNLOAD_PATH, calorie_file[0]))
 
     return df_weight, df_calories
-
-def get_connection():
-    return mysql.connector.connect(
-        host=DB_HOST,
-        user=DB_USERNAME,
-        password=DB_PASSWORD,
-        database=DB_NAME
-    )
-
-def execute_query(query):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query)
-        conn.commit()
-        cursor.close()
-        conn.close()
-    except Error as e:
-        print("Query Error:", e)
-
-def select_all_query(query):
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()  
-        cursor.execute(query)
-        entries = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return entries
-    except Error as e:
-        print("Query Error:", e)
-
-def push_dfs_to_df(df_weight, df_calories):
-    df_weight['weight_date'] = pd.to_datetime(df_weight['Date']).dt.date
-    df_calories['calorie_date'] = pd.to_datetime(df_calories['Date']).dt.date
-    del df_weight['Date']
-    del df_calories['Date']
-
-    df = pd.merge(df_weight, df_calories, left_on='weight_date', right_on='calorie_date')
-    del df['calorie_date']
-    df.rename(columns={'weight_date': 'date', 'Weight':'weight', 'Food Calories':'calories'}, inplace=True)
-    df = df.sort_values(by='date')
-    df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (HEIGHT * 2.54) - 5 * AGE + 5
-    df['bmr'] = df['bmr'].round(0).astype(int)
-
-    for _, row in df.iterrows():
-        date = row['date']
-        calories = row['calories']
-        bmr = row['bmr']
-        weight = row['weight']
-        q = f'REPLACE INTO entries (date, calories, bmr, weight) VALUES ("{date}", {calories}, {bmr}, {weight})'
-        execute_query(q)
 
 
 try:
@@ -148,7 +97,7 @@ try:
     df_weight, df_calories = convert_files_to_df()
 
     print('Pushing DataFrames to MySQL database...')
-    push_dfs_to_df(df_weight, df_calories)
+    hf.push_dfs_to_db(df_weight, df_calories)
 
     print('Scraping process completed successfully.')
     print()

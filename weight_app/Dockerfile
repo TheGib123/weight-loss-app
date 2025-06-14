@@ -18,15 +18,16 @@ RUN apt-get update && apt-get install -y tzdata
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set timezone to America/Chicago
-ENV TZ=America/Chicago
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-COPY src/ /app/src/
+COPY weight_app/src/ /app/src/
+COPY ../functions/helper_functions.py /app/
 WORKDIR /app/src
 
 # Install pip requirements
 RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Set timezone to America/Chicago
+ENV TZ=America/Chicago
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 EXPOSE 5000
 

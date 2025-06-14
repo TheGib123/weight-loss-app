@@ -3,8 +3,8 @@ version: '3.9'
 services:
   weight_app:
     build:
-      context: ./weight_app
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: weight_app/Dockerfile
     container_name: weight_app
     ports:
       - "80:5000"
@@ -29,8 +29,8 @@ services:
 
   scrape_app:
     build:
-      context: ./scrape_app
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: scrape_app/Dockerfile
     container_name: scrape_app
     environment:
       - LOSEIT_EMAIL=${LOSEIT_EMAIL}

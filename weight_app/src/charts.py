@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import numpy as np
 
-def trend_chart(df):
+def daily_chart(df):
     # advanced chart
 
     fig = go.Figure()
@@ -87,7 +87,7 @@ def trend_chart(df):
     graph_html = pio.to_html(fig, full_html=False)
     return graph_html
 
-def daily_chart(df):
+def daily_trend_chart(df):
     # simple chart
 
     fig = go.Figure()
@@ -149,7 +149,7 @@ def daily_chart(df):
     graph_html = pio.to_html(fig, full_html=False)
     return graph_html
 
-def weekly_chart(df):
+def weekly_avg_chart(df):
     week_df = df.copy()
     week_df['date'] = pd.to_datetime(week_df['date'])  # Ensure Date is datetime
     week_df['weekday'] = week_df['date'].dt.day_name()
