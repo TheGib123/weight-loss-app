@@ -76,9 +76,11 @@ def upload_csv():
 
     return redirect('/')
 
+
 @app.route('/import_data', methods=['GET'])
 def import_data():
     return render_template('import.html')
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -104,25 +106,37 @@ def index():
     return render_template('index.html', entries=entries, weight_data=weight_data)
 
 
-@app.route('/daily_trend_chart')
-def daily_trend_chart():
-    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())
-    graph_html = charts.daily_trend_chart(df)
-    return render_template('chart.html', graph_html=graph_html)
-
-
 @app.route('/daily_chart')
 def daily_chart():
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())
-    graph_html = charts.daily_chart(df)
-    return render_template('chart.html', graph_html=graph_html)
+    if (df.empty):
+        flash('No data available for daily chart.', 'danger')
+        return redirect('/')
+    else:
+        graph_html = charts.daily_chart(df)
+        return render_template('chart.html', graph_html=graph_html)
+    
+
+@app.route('/daily_trend_chart')
+def daily_trend_chart():
+    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())
+    if (df.empty):
+        flash('No data available for daily trend chart.', 'danger')
+        return redirect('/')
+    else:
+        graph_html = charts.daily_trend_chart(df)
+        return render_template('chart.html', graph_html=graph_html)
 
 
 @app.route('/weekly_avg_chart')
 def weekly_avg_chart():  
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
-    graph_html = charts.weekly_avg_chart(df)
-    return render_template('chart.html', graph_html=graph_html)
+    if (df.empty):
+        flash('No data available for weekly average chart.', 'danger')
+        return redirect('/')
+    else:
+        graph_html = charts.weekly_avg_chart(df)
+        return render_template('chart.html', graph_html=graph_html)
 
 
 @app.route('/data')
