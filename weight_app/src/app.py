@@ -15,23 +15,23 @@ import helper_functions as hf
 
 # Load environment variables from .env file
 load_dotenv()
-LOSEIT_EMAIL = os.getenv('LOSEIT_EMAIL')
-LOSEIT_PASSWORD = os.getenv('LOSEIT_PASSWORD')
-DB_USERNAME = os.getenv('DB_USERNAME')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_HOST = os.getenv('DB_HOST')
-DB_NAME = os.getenv('DB_NAME')
-HEIGHT = int(os.getenv('HEIGHT'))
-AGE = int(os.getenv('AGE'))
+# LOSEIT_EMAIL = os.getenv('LOSEIT_EMAIL')
+# LOSEIT_PASSWORD = os.getenv('LOSEIT_PASSWORD')
+# DB_USERNAME = os.getenv('DB_USERNAME')
+# DB_PASSWORD = os.getenv('DB_PASSWORD')
+# DB_HOST = os.getenv('DB_HOST')
+# DB_NAME = os.getenv('DB_NAME')
+# HEIGHT = int(os.getenv('HEIGHT'))
+# AGE = int(os.getenv('AGE'))
 HEAVY_WEIGHT = int(os.getenv('HEAVY_WEIGHT'))
-CRON_TIME = os.getenv('CRON_TIME')
-DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH')
+# CRON_TIME = os.getenv('CRON_TIME')
+# DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH')
 
 
 # Initialize the database with correct table structure
 def init_db():
     try:
-        q ='''
+        q1 ='''
             CREATE TABLE IF NOT EXISTS entries (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 date DATE UNIQUE,
@@ -40,7 +40,7 @@ def init_db():
                 weight FLOAT
             )
         '''
-        hf.execute_query(q)
+        hf.execute_query(q1)
     except Error as e:
         print("DB Init Error:", e)
 
@@ -54,32 +54,9 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
 
-@app.route('/upload', methods=['POST'])
-def upload_csv():
-    weight_file = request.files.get('weight_file')
-    calorie_file = request.files.get('calorie_file')
-
-    if not weight_file or not calorie_file:
-        flash('Both files are required!', 'danger')
-        return redirect('/')
-
-    try:
-        # Load both CSVs using pandas
-        df_weight = pd.read_csv(weight_file)
-        df_calories = pd.read_csv(calorie_file)
-        hf.push_dfs_to_db(df_weight, df_calories)
-        flash('CSV imported successfully!', 'success')
-
-    except Exception as e:
-        print("CSV Upload Error:", e)
-        flash('Error importing CSV: ' + str(e), 'danger')
-
-    return redirect('/')
-
-
-@app.route('/import_data', methods=['GET'])
-def import_data():
-    return render_template('import.html')
+#################
+# Home page
+#################
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -93,7 +70,7 @@ def index():
         return redirect('/') 
 
     entries = hf.select_all_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date')
-    last_date = hf.select_all_query('SELECT max(date) FROM entries')
+    last_date = hf.select_all_query('SELECT DATE_FORMAT(MAX(date), "%m/%d/%Y") AS max_date_formatted FROM entries')
     current_weight = hf.select_all_query('SELECT weight FROM entries JOIN (SELECT MAX(date) AS max_date FROM entries) AS max_date_table ON entries.date = max_date_table.max_date')
 
     weight_data = {
@@ -102,8 +79,50 @@ def index():
         'last_date': last_date[0][0] if last_date else None,
         'current_weight': current_weight[0][0] if current_weight else None,
     }
-    
     return render_template('index.html', entries=entries, weight_data=weight_data)
+
+
+#################
+# Data Pages
+#################
+
+
+@app.route('/data')
+def view_data():
+    entries = hf.select_all_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date')
+    return render_template('data.html', entries=entries)
+
+
+@app.route('/data/import_data', methods=['GET', 'POST'])
+def import_data():
+    if request.method == 'POST':
+        weight_file = request.files.get('weight_file')
+        calorie_file = request.files.get('calorie_file')
+
+        if not weight_file or not calorie_file:
+            flash('Both files are required!', 'danger')
+            return redirect('/data/import_data')
+
+        try:
+            # Load both CSVs using pandas
+            df_weight = pd.read_csv(weight_file)
+            df_calories = pd.read_csv(calorie_file)
+            hf.push_dfs_to_db(df_weight, df_calories)
+            flash('CSV imported successfully!', 'success')
+
+        except Exception as e:
+            print("CSV Upload Error:", e)
+            flash('Error importing CSV: ' + str(e), 'danger')
+            return redirect('/data/import_data')
+
+        return redirect('/')
+    else:
+        return render_template('import.html')
+
+
+#################
+# Charts
+#################
 
 
 @app.route('/daily_chart')
@@ -137,12 +156,6 @@ def weekly_avg_chart():
     else:
         graph_html = charts.weekly_avg_chart(df)
         return render_template('chart.html', graph_html=graph_html)
-
-
-@app.route('/data')
-def view_data():
-    entries = hf.select_all_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date')
-    return render_template('data.html', entries=entries)
 
 
 if __name__ == '__main__':

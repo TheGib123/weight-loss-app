@@ -1,8 +1,10 @@
 from mysql.connector import Error
 from dotenv import load_dotenv
+from datetime import datetime
 import pandas as pd
 import os
 import mysql.connector
+
 
 load_dotenv()
 LOSEIT_EMAIL = os.getenv('LOSEIT_EMAIL')
@@ -12,10 +14,11 @@ DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_HOST = os.getenv('DB_HOST')
 DB_NAME = os.getenv('DB_NAME') 
 HEIGHT = int(os.getenv('HEIGHT'))
-AGE = int(os.getenv('AGE'))
+DOB = os.getenv('DOB')
 HEAVY_WEIGHT = int(os.getenv('HEAVY_WEIGHT'))
 CRON_TIME = os.getenv('CRON_TIME')
 DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH')
+
 
 def get_connection():
     return mysql.connector.connect(
@@ -24,6 +27,7 @@ def get_connection():
         password=DB_PASSWORD,
         database=DB_NAME
     )
+
 
 def execute_query(query):
     try:
@@ -35,6 +39,7 @@ def execute_query(query):
         conn.close()
     except Error as e:
         print("Query Error:", e)
+
 
 def select_all_query(query):
     try:
@@ -48,6 +53,13 @@ def select_all_query(query):
     except Error as e:
         print("Query Error:", e)
 
+
+def get_age(weigh_in_date):
+    dob = datetime.strptime(DOB, '%m/%d/%Y')
+    age = weigh_in_date.year - dob.year - ((weigh_in_date.month, weigh_in_date.day) < (dob.month, dob.day))
+    return age
+
+
 def push_dfs_to_db(df_weight, df_calories):
     df_weight['weight_date'] = pd.to_datetime(df_weight['Date']).dt.date
     df_calories['calorie_date'] = pd.to_datetime(df_calories['Date']).dt.date
@@ -58,7 +70,7 @@ def push_dfs_to_db(df_weight, df_calories):
     del df['calorie_date']
     df.rename(columns={'weight_date': 'date', 'Weight':'weight', 'Food Calories':'calories'}, inplace=True)
     df = df.sort_values(by='date')
-    df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (HEIGHT * 2.54) - 5 * AGE + 5
+    df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (HEIGHT * 2.54) - 5 * get_age(df['date']) + 5
     df['bmr'] = df['bmr'].round(0).astype(int)
 
     for _, row in df.iterrows():

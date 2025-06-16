@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import numpy as np
 
-def daily_chart(df):
+def daily_trend_chart(df):
     # advanced chart
 
     fig = go.Figure()
@@ -87,7 +87,7 @@ def daily_chart(df):
     graph_html = pio.to_html(fig, full_html=False)
     return graph_html
 
-def daily_trend_chart(df):
+def daily_chart(df):
     # simple chart
 
     fig = go.Figure()
