@@ -13,8 +13,8 @@ DB_USERNAME = os.getenv('DB_USERNAME')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_HOST = os.getenv('DB_HOST')
 DB_NAME = os.getenv('DB_NAME') 
-HEIGHT = int(os.getenv('HEIGHT'))
 DOB = os.getenv('DOB')
+HEIGHT = int(os.getenv('HEIGHT'))
 HEAVY_WEIGHT = int(os.getenv('HEAVY_WEIGHT'))
 CRON_TIME = os.getenv('CRON_TIME')
 DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH')
@@ -70,7 +70,10 @@ def push_dfs_to_db(df_weight, df_calories):
     del df['calorie_date']
     df.rename(columns={'weight_date': 'date', 'Weight':'weight', 'Food Calories':'calories'}, inplace=True)
     df = df.sort_values(by='date')
-    df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (HEIGHT * 2.54) - 5 * get_age(df['date']) + 5
+    df['age'] = df['date'].apply(get_age)
+    print(df.head())
+    df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (HEIGHT * 2.54) - 5 * df['age'] + 5
+    #df['bmr'] = 10 * (df['weight'] * 0.45359237) + 6.25 * (HEIGHT * 2.54) - 5 * 29 + 5
     df['bmr'] = df['bmr'].round(0).astype(int)
 
     for _, row in df.iterrows():

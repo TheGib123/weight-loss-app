@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, flash, url_for
 from mysql.connector import Error
 from dotenv import load_dotenv
+from datetime import datetime
 import mysql.connector
 import pandas as pd
 import os
@@ -129,7 +130,7 @@ def import_data():
 def daily_chart():
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())
     if (df.empty):
-        flash('No data available for daily chart.', 'danger')
+        flash('No data available for chart.', 'danger')
         return redirect('/')
     else:
         graph_html = charts.daily_chart(df)
@@ -140,7 +141,7 @@ def daily_chart():
 def daily_trend_chart():
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())
     if (df.empty):
-        flash('No data available for daily trend chart.', 'danger')
+        flash('No data available for chart.', 'danger')
         return redirect('/')
     else:
         graph_html = charts.daily_trend_chart(df)
@@ -151,11 +152,67 @@ def daily_trend_chart():
 def weekly_avg_chart():  
     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
     if (df.empty):
-        flash('No data available for weekly average chart.', 'danger')
+        flash('No data available for chart.', 'danger')
         return redirect('/')
     else:
         graph_html = charts.weekly_avg_chart(df)
         return render_template('chart.html', graph_html=graph_html)
+
+
+@app.route('/calorie_weight_scatter')
+def calorie_weight_scatter():
+    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
+    if (df.empty):
+        flash('No data available for chart.', 'danger')
+        return redirect('/')
+    else:
+        graph_html = charts.calorie_weight_change(df)
+        return render_template('chart.html', graph_html=graph_html)
+
+
+@app.route('/calories_vs_weight') 
+def calories_vs_weight():
+    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
+    if (df.empty):
+        flash('No data available for chart.', 'danger')
+        return redirect('/')
+    else:
+        graph_html = charts.calories_vs_weight(df)
+        return render_template('chart.html', graph_html=graph_html)
+
+
+@app.route('/calories_distribution') 
+def calories_distribution():
+    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
+    if (df.empty):
+        flash('No data available for chart.', 'danger')
+        return redirect('/')
+    else:
+        graph_html = charts.calories_distribution(df, 100)
+        return render_template('chart.html', graph_html=graph_html)
+    
+
+@app.route('/forecast_weight', methods=['GET', 'POST'])
+def forecast_weight():
+    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
+    if (df.empty):
+        flash('No data available for chart.', 'danger')
+        return redirect('/')
+    else:
+        if request.method == 'POST':
+            forecast_date = request.form.get('forecast_date')
+            forecast_date = datetime.strptime(forecast_date, "%Y-%m-%d").date()
+            now = datetime.now().date()
+            if now > forecast_date:
+                flash('Forecast date must be in the future!', 'danger')
+                return redirect('/forecast_weight')
+            else:
+                graph_html, target_date, predicted_weight = charts.forecast_weight(df, forecast_date)
+                return render_template('chart.html', graph_html=graph_html, forecast_weight=True, target_date=target_date, predicted_weight=predicted_weight)
+            
+        else:    
+            graph_html, target_date, predicted_weight = charts.forecast_weight(df)
+            return render_template('chart.html', graph_html=graph_html, forecast_weight=True, target_date=target_date, predicted_weight=predicted_weight)
 
 
 if __name__ == '__main__':
