@@ -16,17 +16,7 @@ import helper_functions as hf
 
 # Load environment variables from .env file
 load_dotenv()
-# LOSEIT_EMAIL = os.getenv('LOSEIT_EMAIL')
-# LOSEIT_PASSWORD = os.getenv('LOSEIT_PASSWORD')
-# DB_USERNAME = os.getenv('DB_USERNAME')
-# DB_PASSWORD = os.getenv('DB_PASSWORD')
-# DB_HOST = os.getenv('DB_HOST')
-# DB_NAME = os.getenv('DB_NAME')
-# HEIGHT = int(os.getenv('HEIGHT'))
-# AGE = int(os.getenv('AGE'))
 HEAVY_WEIGHT = int(os.getenv('HEAVY_WEIGHT'))
-# CRON_TIME = os.getenv('CRON_TIME')
-# DOWNLOAD_PATH = os.getenv('DOWNLOAD_PATH')
 
 
 # Initialize the database with correct table structure

@@ -19,7 +19,6 @@ services:
       - DB_NAME=${DB_NAME}
       - HEIGHT=${HEIGHT}
       - DOB=${DOB}
-      - AGE=${AGE}
       - HEAVY_WEIGHT=${HEAVY_WEIGHT}
       - CRON_TIME=${CRON_TIME}
       - DOWNLOAD_PATH=${DOWNLOAD_PATH}
@@ -42,7 +41,6 @@ services:
       - DB_NAME=${DB_NAME}
       - HEIGHT=${HEIGHT}
       - DOB=${DOB}
-      - AGE=${AGE}
       - HEAVY_WEIGHT=${HEAVY_WEIGHT}
       - CRON_TIME=${CRON_TIME}
       - DOWNLOAD_PATH=${DOWNLOAD_PATH}
