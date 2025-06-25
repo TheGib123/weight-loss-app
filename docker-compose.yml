@@ -7,7 +7,7 @@ services:
       dockerfile: weight_app/Dockerfile
     container_name: weight_app
     ports:
-      - "80:5000"
+      - "8080:5000"
     volumes:
       - ./weight_app/src:/app/src
     environment:
