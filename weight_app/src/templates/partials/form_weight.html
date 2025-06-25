@@ -1,9 +1,10 @@
 <div class="container mt-5">
-    <form method="POST" enctype="multipart/form-data" action="/forecast_weight_by_date">
+    <form method="POST" enctype="multipart/form-data" action="/forecast_date_by_weight">
         <div class="row mb-3">
             <div class="col-md-4"></div>
             <div class="col-md-4">
-                <input type="date" name="forecast_date" class="form-control">
+                <label for="targetWeight" class="form-label">Target Weight (lbs)</label>
+                <input type="number" class="form-control" id="targetWeight" name="target_weight" min="50" max="400" step="1" required>
                 <br>
                 <button type="submit" class="btn btn-primary">Submit</button>
             </div>

@@ -11,9 +11,14 @@
     <!-- Insert graph HTML safely -->  
     {{ graph_html|safe }}
     
-    {% if forecast_weight %}
-        {% include "partials/forecast_overview.html" %}
+    {% if forecast_weight_by_date %}
+        {% include "partials/forecast_weight_by_date_overview.html" %}
         {% include "partials/form_date.html" %}
+    {% endif %}
+
+    {% if forecast_date_by_weight %}
+        {% include "partials/forecast_date_by_weight_overview.html" %}
+        {% include "partials/form_weight.html" %}
     {% endif %}
 
 </body>
