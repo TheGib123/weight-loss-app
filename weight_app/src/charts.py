@@ -372,13 +372,6 @@ def forecast_weight_by_date(df, target_date=datetime.now().date() + timedelta(da
             'forecast_weight': myfunc(i)
         })
 
-    # Print data
-    # for i in model_data:
-    #     print(i)
-    # print('forecast')
-    # for i in model_forecast_data:
-    #     print(i)
-
     actual_dates = [d['date'] for d in model_data]
     actual_weights = [d['weight'] for d in model_data]
     actual_model = [d['model'] for d in model_data]
@@ -447,21 +440,17 @@ def forecast_date_by_weight(df, target_weight):
     actual_model = [d['model'] for d in model_data] 
     
     x_target = (target_weight - intercept) / slope          # may be fractional
-    print(f'x_target {x_target}')
-    # if x_target < 0:
-    #     raise ValueError("Target weight would be reached before first record.")
 
     predicted_date = start_date + timedelta(days=int(round(x_target)))
 
-    # ---- 3. Build model & forecast lines -----------------------------------
-    last_known_day = x_numeric[-1]
-    print(f'last_known_day {last_known_day}')
-    step = 1 if x_target >= last_known_day else -1           # forward or back
-    forecast_days = list(range(last_known_day, int(round(x_target)) + step, step))
+    # Build model & forecast lines
+    last_known_day_plus_one = x_numeric[-1] + 1
+    step = 1 if x_target >= last_known_day_plus_one else -1           # forward or back
+    forecast_days = list(range(last_known_day_plus_one, int(round(x_target)) + step, step))
     forecast_dates  = [start_date + timedelta(days=d) for d in forecast_days]
     forecast_weights = [round(slope * d + intercept, 1) for d in forecast_days]
 
-    # ---- 4. Compose Plotly figure ------------------------------------------
+    # Compose Plotly figure
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(x=actual_dates, y=actual_weights, mode='lines+markers', name='Weight (lbs)', line=dict(color='blue')))

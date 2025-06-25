@@ -125,17 +125,6 @@ def daily_chart():
     else:
         graph_html = charts.daily_chart(df)
         return render_template('chart.html', graph_html=graph_html)
-    
-
-# @app.route('/daily_trend_chart')
-# def daily_trend_chart():
-    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())
-    if (df.empty):
-        flash('No data available for chart.', 'danger')
-        return redirect('/')
-    else:
-        graph_html = charts.daily_trend_chart(df)
-        return render_template('chart.html', graph_html=graph_html)
 
 
 @app.route('/weekly_avg_chart')
@@ -146,28 +135,6 @@ def weekly_avg_chart():
         return redirect('/')
     else:
         graph_html = charts.weekly_avg_chart(df)
-        return render_template('chart.html', graph_html=graph_html)
-
-
-# @app.route('/calorie_weight_scatter')
-# def calorie_weight_scatter():
-#     df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
-#     if (df.empty):
-#         flash('No data available for chart.', 'danger')
-#         return redirect('/')
-#     else:
-#         graph_html = charts.calorie_weight_change(df)
-#         return render_template('chart.html', graph_html=graph_html)
-
-
-# @app.route('/calories_vs_weight') 
-# def calories_vs_weight():
-    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
-    if (df.empty):
-        flash('No data available for chart.', 'danger')
-        return redirect('/')
-    else:
-        graph_html = charts.calories_vs_weight(df)
         return render_template('chart.html', graph_html=graph_html)
 
 
@@ -207,7 +174,9 @@ def forecast_weight_by_date():
 
 @app.route('/forecast_date_by_weight', methods=['GET', 'POST'])
 def forecast_date_by_weight():
-    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection())      
+    df = pd.read_sql_query('SELECT date, calories, weight, bmr FROM entries ORDER BY date', hf.get_connection()) 
+    min_weight = hf.select_all_query('SELECT min(weight) FROM entries')[0][0];   
+    min_weight = int(min_weight)
     if (df.empty):
         flash('No data available for chart.', 'danger')
         return redirect('/')
@@ -215,17 +184,15 @@ def forecast_date_by_weight():
         if request.method == 'POST':
             try:
                 target_weight = int(request.form.get('target_weight'))
-                print("Target weight:", target_weight)
-                print(type(target_weight))
                 graph_html, goal_date = charts.forecast_date_by_weight(df, target_weight)
-                return render_template('chart.html', graph_html=graph_html, forecast_date_by_weight=True, target_weight=target_weight, goal_date=goal_date)
+                return render_template('chart.html', graph_html=graph_html, min_weight=min_weight, forecast_date_by_weight=True, target_weight=target_weight, goal_date=goal_date)
             except:
                 pass
         current_weight = hf.select_all_query('SELECT weight FROM entries JOIN (SELECT MAX(date) AS max_date FROM entries) AS max_date_table ON entries.date = max_date_table.max_date')
         current_weight = current_weight[0][0] if current_weight else 110
         target_weight = int(current_weight) - 10
         graph_html, goal_date = charts.forecast_date_by_weight(df, target_weight)
-        return render_template('chart.html', graph_html=graph_html, forecast_date_by_weight=True, target_weight=target_weight, goal_date=goal_date) 
+        return render_template('chart.html', graph_html=graph_html, min_weight=min_weight, forecast_date_by_weight=True, target_weight=target_weight, goal_date=goal_date) 
 
 
 if __name__ == '__main__':
