@@ -59,7 +59,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}        # Change this
       MYSQL_DATABASE: ${DB_NAME}              # Optional: initial database
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - ./mysql_database:/var/lib/mysql
     healthcheck:
