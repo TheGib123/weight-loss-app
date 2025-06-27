@@ -8,8 +8,8 @@ services:
     container_name: weight_app
     ports:
       - "5000:5000"
-    volumes:
-      - ./weight_app/src:/app/src
+    # volumes:
+    #   - ./weight_app/src:/app/src
     environment:
       - LOSEIT_EMAIL=${LOSEIT_EMAIL}
       - LOSEIT_PASSWORD=${LOSEIT_PASSWORD}
