@@ -32,5 +32,4 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 EXPOSE 5000
 
-#CMD ["python", "app.py"]
-CMD ["tail", "-f", "/dev/null"]
+CMD ["python", "app.py"]
