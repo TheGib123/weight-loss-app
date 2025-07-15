@@ -1,0 +1,10 @@
+git pull proj main
+
+docker-compose down
+
+docker-compose build
+
+docker-compose up -d
+
+docker images 
+    remove old images
