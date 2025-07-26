@@ -333,7 +333,10 @@ def calories_distribution(df, bin_size=100):
     return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
 
-def forecast_weight(df, target_date=datetime.now().date() + timedelta(days=30)):
+def forecast_weight(df, target_date=None):
+    if target_date is None:
+        target_date = datetime.now().date() + timedelta(days=30)
+
     df = df.sort_values(by='date')  # Ensure DataFrame is sorted by date
     dates = df['date'].tolist()  # Use dates from the DataFrame
 
