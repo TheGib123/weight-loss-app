@@ -26,7 +26,7 @@ Configure env file from the env_example file
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/weight-loss-tracker.git
+git clone https://github.com/TheGib123/weight-loss-app
 cd weight-loss-tracker
 
 # Build the Docker image
